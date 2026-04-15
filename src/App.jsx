@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Leaf } from 'lucide-react';
+import { Leaf, Menu } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
+import { useEffect, useState } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Weather from './pages/Weather';
@@ -45,10 +46,54 @@ function ProtectedRoute({ children }) {
 }
 
 function AppLayout({ children }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+
+      if (!mobile) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="app-layout">
-      <Sidebar />
-      <main className="main-content">
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(prev => !prev)}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+        isMobile={isMobile}
+      />
+
+      <div
+        className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden={!mobileMenuOpen}
+      />
+
+      <main className={`main-content ${collapsed && !isMobile ? 'sidebar-collapsed' : ''}`}>
+        <div className="mobile-header">
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="mobile-logo">
+            <Leaf size={16} />
+            SAIP
+          </div>
+        </div>
         {children}
       </main>
     </div>
